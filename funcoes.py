@@ -125,7 +125,7 @@ def pega_nr_linhas(tabela):
 def lista_mencoes_pandas(tabela):
     dicionario = dict()
     linhas = pega_nr_linhas(tabela)
-    for l in range(0, linhas+1):
+    for l in range(0, linhas):#retirei o '+1' que estava somando com a variavel 'lista' verificar se extá excluindo a última linha
         lista = list()
         #pega os indices
         idade = tabela.iloc[l]['IDADE']

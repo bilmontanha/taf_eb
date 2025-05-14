@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 from tabela_indice import *
+import funcoes as f
 
 # diretorio_atual = Path.cwd()
 # arquivo = diretorio_atual/'PLANILHA TAF.xlsx'
@@ -36,19 +37,27 @@ st.download_button(
 uploaded_file = st.file_uploader("Faça o upload do arquivo do TAF")
 if uploaded_file is not None:
     tabela_tafs = pega_excel(uploaded_file)#carrega a tabela para um dataframe
+    
+
 
 
 try:
     tabela_tafs.drop(columns=['OBS','BI Publicado'], inplace=True) #limpando a tabela das colunas rolhas
     options = tabela_tafs['TAF'].value_counts().index.sort_values()
     selection = st.pills("Selecione o TAF", options, selection_mode="multi")
-    st.markdown(f"Você selecionou o {selection}.")
     nova_tabela = tabela_tafs[tabela_tafs['TAF'].isin(selection)]
-    st.dataframe(nova_tabela)
+    nova_tabela.reset_index(inplace=True, drop=True)
+    #st.dataframe(nova_tabela)
 
 
-        
-        
+    col1, col2 = st.columns([0.3,0.7], vertical_alignment='top', border=True)
+    with col1:
+        opcoes_selectbox = ['Verificar erros de lançamento', "verificar a menção correta de um militar", 'Corrigir os erros de lançamento']
+        escolha = st.selectbox("Escolha uma opção abaixo",opcoes_selectbox, )
+    with col2:
+        if escolha == 'Verificar erros de lançamento':
+            tabela_lista_de_mencoes = pd.DataFrame.from_dict(f.lista_mencoes_pandas(nova_tabela), orient='index')
+            st.dataframe(tabela_lista_de_mencoes)
 
 
 
@@ -57,3 +66,15 @@ try:
 
 except Exception as e:
     st.warning(f"Erro ao executar: '{e}'")
+
+
+
+
+        
+        
+
+
+
+
+
+
