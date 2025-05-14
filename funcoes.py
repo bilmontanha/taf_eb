@@ -270,39 +270,6 @@ def mencao_final_limpa(dicio): #menção final sem os militares com erros de lan
             resultado[k] = 'S'
     return resultado
 
-# Pega somente os militares que não tem erro na menção final.
-def mencao_final_limpa(dicio): #menção final sem os militares com erros de lançamento
-    dicio_copia = dicio.copy()
-    resultado = dict()         #mencao_final_limpa(lista_mencoes(aba))
-    for k, v in dicio_copia.items():
-        if 'NR' in v:
-            resultado[k] = 'NR'
-            continue
-        if 'A' in v:
-            if 'I' in v:
-                resultado[k] = 'I'
-                continue
-            else:
-                resultado[k] = 'R'
-                continue
-        if 'I' in v:
-            resultado[k] = 'I'
-            continue
-        if 'R' in v:
-            resultado[k] = 'R'
-            continue
-        if 'B' in v:
-            resultado[k] = 'B'
-            continue
-        if 'MB' in v:
-            resultado[k] = 'MB'
-            continue
-        if 'E' in v:
-            resultado[k] = 'E'
-            continue
-        if 'S' in v:
-            resultado[k] = 'S'
-    return resultado
 
 def mencao_final_erros(dicio):#entrega um dicionário com os militares que estão com erro
     dicio_copia = dicio.copy()
@@ -335,7 +302,7 @@ def mencao_final_erros(dicio):#entrega um dicionário com os militares que estã
 def mencao_lancada(tabela):#pega as menções que foram lançadas na coluna  'MENÇÃO'
     dicionario = dict()
     linhas = pega_nr_linhas(tabela)
-    for l in range(0, linhas+1):
+    for l in range(0, linhas):
         pg_nome = f'{tabela.iloc[l]['P/G']} {tabela.iloc[l]['NOME']}'
         mencao = tabela.iloc[l]['MENÇÃO']
         dicionario[pg_nome] = mencao
@@ -345,22 +312,14 @@ def mencao_lancada(tabela):#pega as menções que foram lançadas na coluna  'ME
 def erros_lancamento(mencao_lancada, mencao_final_limpa):
     mencao_lancada_copia = mencao_lancada.copy()
     mencao_final_limpa_copia = mencao_final_limpa.copy()
-    lista = list()
+    dicionario = dict()
     for k,v in mencao_lancada_copia.items():
         try:
             if mencao_final_limpa_copia[k] != v:
-                print(f'{k} está com a menção {v}, mas a correta é {mencao_final_limpa_copia[k]}')
-                lista.append(v)
-            else:
-                print('',end='')
-        except:
-            #print(f'{k} não pode ser verificado pois possui algum erro de lançamento')
-            print('',end='')
-    if lista == []:
-        print('*'*70)
-        print('''     NÃO FORAM ENCONTRADOS ERROS NAS MENÇÕES FINAIS
-DOS MILITARES QUE ESTAVAM SEM ALTERAÇÃO NO LANÇAMENTO.''')
-        print('*'*70)
+               dicionario[k] = f'Consta com a menção {v}, mas o correto é a menção/lançamento: {mencao_final_limpa_copia[k]}'
+        except Exception as e:
+            return f'Erro: {e}'
+    return dicionario
 
 
 
