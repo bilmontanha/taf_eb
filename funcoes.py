@@ -27,8 +27,12 @@ def determinar_mencao(idade,dicio_atividades,atividade,lem,segmento,indice):# re
     if lem == 'B':
         if idade < 50:
             if teste_indice == 'None' or teste_indice == 'nan':
-                return f'erro no indice - {atividade}'
+                return f'dado ausente em - {atividade}'
     #verificação se foi lançado um 'NR' ou um "A" de TAF alternativo
+    if atividade == 'BARRA':
+        if lem == 'CT':
+            return 'X'
+
     if isinstance(indice,str):
         if indice == 'NR' or indice == 'A':
             return indice
@@ -76,15 +80,15 @@ def determinar_mencao(idade,dicio_atividades,atividade,lem,segmento,indice):# re
 
 #criar colunas com as menções de cada índice.
 def criar_coluna_mencao_atividade(tabela):
-    try:
+    #try:
         copia_tabela = tabela.copy(deep=True)
         atividades = ['CORRIDA', 'FLEXÃO', 'ABDOMINAL', 'BARRA']
         for atividade in atividades:
             copia_tabela[f"M_{atividade}"] = copia_tabela.apply(lambda row: determinar_mencao(row['IDADE'],dicio_atividades,atividade, row['LEM'], row['SEGMENTO'], row[atividade]), axis=1)
-        nova_tabela = copia_tabela[(['MENÇÃO','M_CORRIDA','M_FLEXÃO','M_ABDOMINAL','M_BARRA'])]
+        nova_tabela = copia_tabela[(['P/G', 'NOME','MENÇÃO','M_CORRIDA','M_FLEXÃO','M_ABDOMINAL','M_BARRA'])]
         return nova_tabela
-    except Exception as e:
-        return st.exception(e)
+    #except Exception as e:
+        #return print(e)
 
 
 ##Devolvendo Boleanos para os variáveis corrida, flexão, abdominal, barra e menção
@@ -150,13 +154,13 @@ def verifica_erros_lancamento(dicio):#Inserir a função lista_mencoes() dentro 
     #lista_verificacao = ['I','R','B','MB','E','S','NR','X','A']
     for k,v in dicio_copia.items():
         if 'erro idade' in v:
-            dicionario[k] = 'erro idade'
+            dicionario[k] = 'erro no lançamento da idade'
             continue
         if 'erro no segmento' in v:
-            dicionario[k] = 'erro no segmento'
+            dicionario[k] = 'erro no lançamento do segmento'
             continue
         if 'erro na LEM' in v:
-            dicionario[k] = 'erro na LEM'
+            dicionario[k] = 'erro no lançamento da LEM'
             continue
         if 'erro no indice - CORRIDA' in v:
             dicionario[k] = 'erro no lançamento da CORRIDA'
@@ -186,6 +190,9 @@ def mencao_final(dicio):
     dicio_copia = dicio.copy()#só para não alterar o dicionário original
     resultado = dict()
     for k, v in dicio_copia.items():
+        if v[0] == 'NR':
+            resultado[k] = 'TAF não realizado'
+            continue
         if 'erro no segmento' in v:
             resultado[k] = 'erro no segmento'
             continue
@@ -309,14 +316,20 @@ def mencao_lancada(tabela):#pega as menções que foram lançadas na coluna  'ME
     return dicionario
 
 #compara a menção lançada com a que teria que ser
-def erros_lancamento(mencao_lancada, mencao_final_limpa):
+def erros_lancamento(mencao_lancada, mencao_final):
     mencao_lancada_copia = mencao_lancada.copy()
-    mencao_final_limpa_copia = mencao_final_limpa.copy()
+    mencao_final_copia = mencao_final.copy()
     dicionario = dict()
     for k,v in mencao_lancada_copia.items():
         try:
-            if mencao_final_limpa_copia[k] != v:
-               dicionario[k] = f'Consta com a menção {v}, mas o correto é a menção/lançamento: {mencao_final_limpa_copia[k]}'
+            if mencao_final_copia[k] != v:
+                if mencao_final_copia[k] == 'TAF não realizado':
+                    continue
+                elif str(v) == 'nan':
+                    dicionario[k] = f'Não foi lançada menção para o militar. A menção correta a ser lançada é: {mencao_final_copia[k]}'
+                    continue
+                else:        
+                    dicionario[k] = f'Consta com a menção {v}, mas o correto é a menção/lançamento: {mencao_final_copia[k]}'
         except Exception as e:
             return f'Erro: {e}'
     return dicionario
@@ -574,15 +587,23 @@ if __name__=='__main__':
     tabela_tafs = pd.concat(dfs,ignore_index=True)#concatena as abas da planilha em uma só
 
     #tabela_tafs = tabela_tafs[~((tabela_tafs["CORRIDA"] == 'A') | (tabela_tafs["CORRIDA"].isna()) | (tabela_tafs["CORRIDA"] == 'X'))] # trata a tabela para tirar "A", nulo e 'X'
-    tabela_tafs["menção item"] = tabela_tafs.apply(lambda row: determinar_mencao(row['IDADE'],dicio_atividades,'CORRIDA', row['LEM'], row['SEGMENTO'], row['CORRIDA']), axis=1)
+    #tabela_tafs["menção item"] = tabela_tafs.apply(lambda row: determinar_mencao(row['IDADE'],dicio_atividades,'CORRIDA', row['LEM'], row['SEGMENTO'], row['CORRIDA']), axis=1)
     #idade,dicio_atividades,atividade,lem,segmento,indice
    
+    tabela_testes = tabela_tafs[tabela_tafs['TAF'].isin(['1º TAF 2024'])]
     nova_tabela = criar_coluna_mencao_atividade(tabela_tafs)
     #nova_tabela.to_excel('tabela.xlsx', index=False)
 
     tabela_tafs.value_counts().index
     taf = ['1º TAF', '2º TAF']
-    tabela1 = tabela_tafs[tabela_tafs['TAF'].isin(taf)]
+    tabela1 = criar_coluna_mencao_atividade(tabela_testes)
+    pprint(tabela1)
+    tabela2 = lista_mencoes_pandas(tabela_tafs)
+    #tabela1.to_excel('teste.xlsx')
+    mencao_final1 = mencao_final(tabela2)
+    mencoes_lancadas = mencao_lancada(tabela_tafs)
+
+    erros = erros_lancamento(mencoes_lancadas, mencao_final1)
 
 
 

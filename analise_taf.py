@@ -51,7 +51,7 @@ try:
     mencao_lancada = f.mencao_lancada(nova_tabela)
     lista_de_mencoes = f.lista_mencoes_pandas(nova_tabela)
     mencao_final = f.mencao_final(lista_de_mencoes)
-    erros_lancamento = f.erros_lancamento(mencao_lancada=mencao_lancada, mencao_final_limpa=mencao_final)
+    erros_lancamento = f.erros_lancamento(mencao_lancada=mencao_lancada, mencao_final=mencao_final)
     erros_lancamentos = pd.DataFrame(erros_lancamento.items(), columns=['Militar', 'Situação'])
 
     col1, col2 = st.columns([0.3,0.7], vertical_alignment='top', border=True)
@@ -69,11 +69,6 @@ try:
             
         if escolha == "Baixar nova planilha com a correção da menção final":
             pass
-     
-
-
-
-
 
 except Exception as e:
     st.warning(f"Erro ao executar: '{e}'")
@@ -88,8 +83,9 @@ except Exception as e:
 
 # #para teste
 # diretorio_atual = Path.cwd()
-# arquivo = diretorio_atual/'PLANILHA TAF(modelo).xlsx'
+# arquivo = diretorio_atual/'PLANILHA TAF.xlsx'
 # uploaded_file = arquivo
-# nova_tabela = tabela_tafs[tabela_tafs['TAF'].isin(['1º TAF'])]
+# nova_tabela = tabela_tafs[tabela_tafs['TAF'].isin(['1º TAF 2024'])]
+# nova_tabela.iloc(30)
 
 
