@@ -16,6 +16,8 @@ def determinar_mencao(idade,dicio_atividades,atividade,lem,segmento,indice):# re
     #verificação de erro na coluna IDADE
     if idade == None or isinstance(idade,str) or idade < 18:
         return 'erro idade'
+    if str(idade) == 'nan':
+        return 'erro idade'
     #verificação de erro na coluna SEGMENTO
     if segmento not in ['M','F'] or segmento == None:
         return 'erro no segmento'
@@ -190,7 +192,7 @@ def mencao_final(dicio):
     dicio_copia = dicio.copy()#só para não alterar o dicionário original
     resultado = dict()
     for k, v in dicio_copia.items():
-        if v[0] == 'NR':
+        if v.count('NR') >= 4:
             resultado[k] = 'TAF não realizado'
             continue
         if 'erro no segmento' in v:
@@ -278,33 +280,6 @@ def mencao_final_limpa(dicio): #menção final sem os militares com erros de lan
     return resultado
 
 
-def mencao_final_erros(dicio):#entrega um dicionário com os militares que estão com erro
-    dicio_copia = dicio.copy()
-    resultado = dict()
-    for k, v in dicio_copia.items():
-        if 'erro no segmento' in v:
-            resultado[k] = 'Erro no lançamento do segmento, só é aceito "M" ou "F"'
-            continue
-        if 'erro na LEM' in v:
-            resultado[k] = 'Erro no lançamento da Linha de Ensino, só é aceito "B" ou "CT"'
-            continue
-        if 'erro idade' in v:
-            resultado[k] = 'Faltando lançar a idade ou idade menor de 18 anos'
-            continue
-        if 'erro no indice - CORRIDA' in v:
-            resultado[k] = 'valor inválido para corrida da CORRIDA'
-            continue
-        if 'erro no indice - FLEXAO' in v:
-            resultado[k] = 'valor inválido para corrida da FLEXÃO'
-            continue
-        if 'erro no indice - ABDOMINAL' in v:
-            resultado[k] = 'valor inválido para corrida da ABDOMINAL'
-            continue
-        if 'erro no indice - BARRA' in v:
-            resultado[k] = 'valor inválido para corrida da BARRA'
-            continue
-    return resultado
-
 
 def mencao_lancada(tabela):#pega as menções que foram lançadas na coluna  'MENÇÃO'
     dicionario = dict()
@@ -325,9 +300,22 @@ def erros_lancamento(mencao_lancada, mencao_final):
             if mencao_final_copia[k] != v:
                 if mencao_final_copia[k] == 'TAF não realizado':
                     continue
+                elif mencao_final_copia[k] == 'erro no segmento':
+                    dicionario[k] = f'Existe um erro no lançamento da coluna "SEGMENTO". Dado ausente ou lançado errado (só aceita "M" ou "F")'
+                elif mencao_final_copia[k] == 'erro na LEM':
+                    dicionario[k] = f'Existe um erro no lançamento da coluna "LEM". Dado ausente ou lançado errado (só aceita "B" ou "CT")'
+                elif mencao_final_copia[k] == 'erro idade':
+                    dicionario[k] = f'Existe um erro no lançamento da coluna "IDADE". Dado ausente ou lançado errado (só aceita números inteiros)'
+                elif mencao_final_copia[k] == 'erro no lançamento da CORRIDA':
+                    dicionario[k] = f'Existe um erro no lançamento da coluna "CORRIDA". Dado ausente ou lançado errado (só aceita número inteiro ou "NR" se o militar não fez o TAF). Caso o militar faça TAF Alternativo e não executa a corrida, coloque um "A" nessa coluna.'
+                elif mencao_final_copia[k] == 'erro no lançamento da FLEXÃO':
+                    dicionario[k] = f'Existe um erro no lançamento da coluna "FLEXÃO". Dado ausente ou lançado errado (só aceita número inteiro, "NR" se o militar não fez o TAF). Caso o militar faça TAF Alternativo e não executa a flexão, coloque um "A" nessa coluna.'
+                elif mencao_final_copia[k] == 'erro no lançamento do ABDOMINAL':
+                    dicionario[k] = f'Existe um erro no lançamento da coluna "ABDOMINAL". Dado ausente ou lançado errado (só aceita número inteiro, "NR" se o militar não fez o TAF. Caso o militar faça TAF Alternativo e não executa o abdominal, coloque um "A" nessa coluna.'
+                elif mencao_final_copia[k] == 'erro no lançamento da BARRA':
+                    dicionario[k] = f'Existe um erro no lançamento da coluna "BARRA". Dado ausente ou lançado errado (só aceita número inteiro, "NR" se o militar não fez o TAF. Caso o militar faça TAF Alternativo e não executa a barra, coloque um "A" nessa coluna.'
                 elif str(v) == 'nan':
                     dicionario[k] = f'Não foi lançada menção para o militar. A menção correta a ser lançada é: {mencao_final_copia[k]}'
-                    continue
                 else:        
                     dicionario[k] = f'Consta com a menção {v}, mas o correto é a menção/lançamento: {mencao_final_copia[k]}'
         except Exception as e:
