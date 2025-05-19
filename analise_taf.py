@@ -23,6 +23,7 @@ st.set_page_config(
 with open('PLANILHA TAF(modelo).xlsx', 'rb') as file:
     arquivo_excel = file.read()
 
+st.markdown("### Ainda não tem a planilha modelo? Faça o download no botão abaixo.")
 st.download_button(
     label="# Baixar a planilha modelo",
     data=arquivo_excel,
@@ -33,14 +34,16 @@ st.download_button(
      )
 
 #solicitando o upload do arquivo
-uploaded_file = st.file_uploader("Faça o upload do arquivo do TAF")
+st.write('*'*20)
+st.markdown("### Já tem a planilha preenchida? Então clique no botão abaixo e escolha o arquivo a ser analisado.")
+uploaded_file = st.file_uploader("")
 if uploaded_file is not None:
     tabela_tafs = pega_excel(uploaded_file)#carrega a tabela para um dataframe
     tabela_tafs.reset_index(inplace=True, drop=True)
 
 
 
-try:
+    #try:
     tabela_tafs.drop(columns=['OBS','BI Publicado'], inplace=True) #limpando a tabela das colunas rolhas
     options = tabela_tafs['TAF'].value_counts().index.sort_values()
     selection = st.pills("Selecione o TAF", options, selection_mode="multi", default=None)
@@ -69,10 +72,10 @@ try:
             
         if escolha == "Baixar nova planilha com a correção da menção final":
             pass
-
-except Exception as e:
-    st.warning(f"Erro ao executar: '{e}'")
-
+    # except Exception as e:
+    #     st.warning(f"Erro ao executar: '{e}'")
+else:
+        st.markdown("### Aguardando carregamento do arquivo.")
 
 
 
@@ -81,11 +84,11 @@ except Exception as e:
 
 
 
-# #para teste
+#para teste
 # diretorio_atual = Path.cwd()
-# arquivo = diretorio_atual/'PLANILHA TAF.xlsx'
+# arquivo = diretorio_atual/'PLANILHA TAF(modelo).xlsx'
 # uploaded_file = arquivo
-# nova_tabela = tabela_tafs[tabela_tafs['TAF'].isin(['1º TAF 2024'])]
-# nova_tabela.iloc(30)
+# tabela_tafs = pega_excel(arquivo)
+# selection = ['1º TAF']
 
 

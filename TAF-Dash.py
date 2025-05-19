@@ -9,7 +9,7 @@ from tabela_indice import *
 
 #DEFININDO CAMINHO PARA O ARQUIVO, DEVERÁ ESTÁR NO MESMO DIRETÓRIO DO SCRIPT
 diretorio_atual = Path.cwd()
-arquivo = diretorio_atual/'PLANILHA TAF.xlsx'
+arquivo = diretorio_atual/'PLANILHA TAF(modelo).xlsx'
 
 ######### INICIANDO A CRIAÇÃO DA PÁGINA
 # CONFIGURANDO A PÁGINA
