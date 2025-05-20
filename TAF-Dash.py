@@ -7,9 +7,6 @@ import funcoes as f
 import plotly.express as px
 from tabela_indice import *
 
-#DEFININDO CAMINHO PARA O ARQUIVO, DEVERÁ ESTÁR NO MESMO DIRETÓRIO DO SCRIPT
-diretorio_atual = Path.cwd()
-arquivo = diretorio_atual/'PLANILHA TAF(modelo).xlsx'
 
 ######### INICIANDO A CRIAÇÃO DA PÁGINA
 # CONFIGURANDO A PÁGINA
@@ -28,84 +25,97 @@ def pega_excel(arquivo):
     tabela_tafs = pd.concat(dfs,ignore_index=True)#concatena as abas da planilha em uma só
     return tabela_tafs
 
-#carregando a tabela num DataFrame
-tabela_tafs = pega_excel(arquivo)
-#limpando as colunas 'rolhas'
-tabela_tafs.drop(columns=['OBS','BI Publicado'], inplace=True)
+uploaded_file = st.file_uploader("CAREEGUE A PLANILHA DO TAF NO BOTÃO ABAIXO")
+if uploaded_file is not None:
+    tabela_tafs = pega_excel(uploaded_file)#carrega a tabela para um dataframe
+    tabela_tafs.reset_index(inplace=True, drop=True)
+    #limpando as colunas 'rolhas'
+    tabela_tafs.drop(columns=['OBS','BI Publicado'], inplace=True)
 
-#TÍTULO
-st.markdown("<h2 style='text-align: center;'>TAF - 10º BIL Mth</h2>", unsafe_allow_html=True)
+    #TÍTULO
+    st.markdown("<h2 style='text-align: center;'>TAF - 10º BIL Mth</h2>", unsafe_allow_html=True)
 
-#Coletando as opções de de colunas
-op_taf = tabela_tafs["TAF"].unique()
-op_seg = tabela_tafs["SEGMENTO"].unique()
-op_pg = tabela_tafs["P/G"].unique()
-op_su = tabela_tafs["COMPANHIA"].unique()
-op_ch = tabela_tafs["CHAMADA"].unique()
-op_atv = tabela_tafs.columns[5:10]
+    
+   
 
-col1, col2 = st.columns([0.3,0.7], vertical_alignment='top', border=True)
-#Montando o menu da esqueda
-with col1:
-    #Botões e filtros para o TAF
-    with st.container(border=True):
-        taf_selecionados = st.pills("# Selecione o TAF", op_taf, selection_mode="multi")
-        if taf_selecionados:
-            tabela_final = tabela_tafs[tabela_tafs['TAF'].isin(taf_selecionados)]
-            tabela_final.reset_index(inplace=True, drop=True)
+    col1, col2 = st.columns([0.3,0.7], vertical_alignment='top', border=True)
+    #Montando o menu da esqueda
+    with col1:
+        #Coletando as opções na coluna do TAF
+        op_taf = tabela_tafs["TAF"].unique()
+        #Botões e filtros para o TAF
+        with st.container(border=True):
+            taf_selecionados = st.pills("# Selecione o TAF", op_taf, selection_mode="multi")
+            if taf_selecionados:
+                tabela_final = tabela_tafs[tabela_tafs['TAF'].isin(taf_selecionados)]
+                tabela_final.reset_index(inplace=True, drop=True)
+            else:
+                tabela_final = tabela_tafs.copy()
+        
+        #coletando as opções de segmento
+        op_seg = tabela_final["SEGMENTO"].unique()
+        #Filtro para segmento
+        with st.container(border=True):
+            seg_selecionados = st.pills("Selecione o Segmento", op_seg, selection_mode="multi")
+            if seg_selecionados:
+                tabela_final = tabela_final[tabela_final['SEGMENTO'].isin(seg_selecionados)]
+                tabela_final.reset_index(inplace=True, drop=True)
+        
+        #coletando as opções de posto e graduação
+        op_pg = tabela_final["P/G"].unique()
+        #Filtro Posto e Graduação
+        with st.container(border=True):
+            pg_selecionados = st.pills("Selecione o Posto/Graduação", op_pg, selection_mode="multi")
+            if pg_selecionados:
+                tabela_final = tabela_final[tabela_final['P/G'].isin(pg_selecionados)]
+                tabela_final.reset_index(inplace=True, drop=True)
+        
+        #Coletando as opções de subunidade
+        op_su = tabela_final["COMPANHIA"].unique()
+        #Filtro Posto e Graduação
+        with st.container(border=True):
+            su_selecionados = st.pills("Selecione a Companhia/Fração", op_su, selection_mode="multi")
+            if su_selecionados:
+                tabela_final = tabela_final[tabela_final['COMPANHIA'].isin(su_selecionados)]
+                tabela_final.reset_index(inplace=True, drop=True)
+        
+        #coletando as opções de chamada
+        op_ch = tabela_final["CHAMADA"].unique()
+        #Filtro Chamadas
+        with st.container(border=True):
+            ch_selecionados = st.pills("Selecione a Chamada", op_ch, selection_mode="multi")
+            if ch_selecionados:
+                tabela_final = tabela_final[tabela_final['CHAMADA'].isin(ch_selecionados)]
+                tabela_final.reset_index(inplace=True, drop=True)
+
+
+    #CRIA UMA TABELA COM AS MENÇÕES POR ATIVIDADE
+    tabela_mencao_atividades = f.criar_coluna_mencao_atividade(tabela_final)
+
+
+
+    #Montando a coluna dos gráficos
+    with col2:
+        #coletando as opções de atividade e menção
+        op_atv = tabela_tafs.columns[5:10]
+        atv_selecionados = st.pills("Selecione a opção para combinação dos gráficos", op_atv, selection_mode="multi")
+        #devolvendo boleanos para as variaveis corrida, flexão, abdominal, barra e mencao para poder utilizar nas funções de gráficos
+        corrida, flexao, abdominal, barra, mencao = f.devolve_boleanos(atv_selecionados)
+        atividades = (corrida, flexao, abdominal, barra, mencao)
+        #CORRIDA
+        if (False, False, False, False, True) == atividades:
+            st.pyplot(f.grafico_pizza(tabela_final, 'MENÇÃO'))
+        elif (False, False, False, False, False) == atividades:
+            st.write("Escolha uma ou mais opções.")
         else:
-            tabela_final = tabela_tafs.copy()
-    
-    #Filtro para segmento
-    with st.container(border=True):
-        seg_selecionados = st.pills("Selecione o Segmento", op_seg, selection_mode="multi")
-        if seg_selecionados:
-            tabela_final = tabela_final[tabela_final['SEGMENTO'].isin(seg_selecionados)]
-            tabela_final.reset_index(inplace=True, drop=True)
-    #Filtro Posto e Graduação
-    with st.container(border=True):
-        pg_selecionados = st.pills("Selecione o Posto/Graduação", op_pg, selection_mode="multi")
-        if pg_selecionados:
-            tabela_final = tabela_final[tabela_final['P/G'].isin(pg_selecionados)]
-            tabela_final.reset_index(inplace=True, drop=True)
-    #Filtro Posto e Graduação
-    with st.container(border=True):
-        su_selecionados = st.pills("Selecione a Companhia/Fração", op_su, selection_mode="multi")
-        if su_selecionados:
-            tabela_final = tabela_final[tabela_final['COMPANHIA'].isin(su_selecionados)]
-            tabela_final.reset_index(inplace=True, drop=True)
-    
-    #Filtro Chamadas
-    with st.container(border=True):
-        ch_selecionados = st.pills("Selecione a Chamada", op_ch, selection_mode="multi")
-        if ch_selecionados:
-            tabela_final = tabela_final[tabela_final['CHAMADA'].isin(ch_selecionados)]
-            tabela_final.reset_index(inplace=True, drop=True)
-
-#CRIA UMA TABELA COM AS MENÇÕES POR ATIVIDADE
-tabela_mencao_atividades = f.criar_coluna_mencao_atividade(tabela_final)
-
-
-
-#Montando a coluna dos gráficos
-with col2:
-    atv_selecionados = st.pills("Selecione a opção para combinação dos gráficos", op_atv, selection_mode="multi")
-    #devolvendo boleanos para as variaveis corrida, flexão, abdominal, barra e mencao para poder utilizar nas funções de gráficos
-    corrida, flexao, abdominal, barra, mencao = f.devolve_boleanos(atv_selecionados)
-    atividades = (corrida, flexao, abdominal, barra, mencao)
-    #CORRIDA
-    if (False, False, False, False, True) == atividades:
-        st.pyplot(f.grafico_pizza(tabela_final, 'MENÇÃO'))
-    else:
-        st.plotly_chart(f.grafico_linha(tabela=tabela_mencao_atividades, corrida=corrida, flexao=flexao, abdominal=abdominal, barra=barra, mencao=mencao))
-    
-    
-
-
-#Mostrar tabela no final
-if st.button('Mostrar Tabela filtrada'): #,on_click=None):
-    tabela_final
-
+            st.plotly_chart(f.grafico_linha(tabela=tabela_mencao_atividades, corrida=corrida, flexao=flexao, abdominal=abdominal, barra=barra, mencao=mencao))
+        
+        
+    #Mostrar tabela no final
+    if st.button('Mostrar Tabela filtrada'): #,on_click=None):
+        tabela_final
+else:
+    st.write("Aguardando carregamento da planilha")
 
 
 

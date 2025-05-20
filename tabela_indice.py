@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 dicio_corrida_m_b = {
     "18-21": {
